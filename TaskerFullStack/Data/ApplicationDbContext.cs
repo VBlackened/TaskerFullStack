@@ -1,0 +1,14 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
+using TaskerFullStack.Models;
+
+namespace TaskerFullStack.Data
+{
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+    {
+        public DbSet<ImageUpload> Images { get; set; }
+
+        public DbSet<DbTaskerItem> TaskerItems { get; set; }
+    }
+}
