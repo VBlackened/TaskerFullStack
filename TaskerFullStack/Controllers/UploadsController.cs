@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using TaskerFullStack.Data;
 using TaskerFullStack.Models;

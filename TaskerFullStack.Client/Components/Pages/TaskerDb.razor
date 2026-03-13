@@ -3,6 +3,7 @@
 @using System.Text.Json.Serialization;
 @using Microsoft.AspNetCore.Authorization;
 @inject IJSRuntime JS;
+@inject HttpClient Http;
 @rendermode InteractiveWebAssembly
 
 @attribute [Authorize]
@@ -40,10 +41,10 @@
     private InputText? textBoxTask { get; set; }
 
     #region lifecycle events
-    protected override async Task OnInitializedAsync()
-    {
-        
-    }
+    // protected override async Task OnInitializedAsync()
+    // {
+
+    // }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -61,41 +62,69 @@
     private async Task addTask()
     {
         ti.Id = Guid.NewGuid();
-        taskerItems.Add(ti);
-        ti = new ();
-        await SaveListAsync();
-        await textBoxTask!.Element!.Value.FocusAsync();
+
+        try
+        {
+            HttpResponseMessage responseMessage = await Http.PostAsJsonAsync("api/TaskerItem", ti);
+
+            //reset the form
+            ti = new();
+
+            await LoadListAsync();
+        }
+        catch
+        {
+            await textBoxTask!.Element!.Value.FocusAsync();
+        }
     }
 
     private async Task deleteTask(TaskerItem item)
     {
-        taskerItems.Remove(item);
-        await SaveListAsync();
-    }
+        try
+        {
+            string route = $"api/TaskerItem/{item.Id}";
+            HttpResponseMessage response = await Http.DeleteAsync(route);
+            response.EnsureSuccessStatusCode();
 
-    private async Task SaveListAsync()
-    {
-        string? taskerItemsJson = JsonSerializer.Serialize(taskerItems);
-        await JS.InvokeVoidAsync("localStorage.setItem", "taskerList", taskerItemsJson);
+            await LoadListAsync();
+        }
+        catch
+        {
+            throw;
+        }
     }
 
     private async Task LoadListAsync()
     {
-        try
+        try 
         {
-            string? taskerItemsJson = await JS.InvokeAsync<string>("localStorage.getItem", "taskerList") ?? "[]";
-            taskerItems = JsonSerializer.Deserialize<List<TaskerItem>>(taskerItemsJson)!;
+            HttpResponseMessage response = await Http.GetAsync("api/TaskerItem");
+            response.EnsureSuccessStatusCode();
+
+            //convert the json to a list of tasker items
+            taskerItems = await response.Content.ReadFromJsonAsync<List<TaskerItem>>() ?? [];
+            StateHasChanged();
         }
-        catch(Exception)
+        catch
         {
             taskerItems = new();
-            await SaveListAsync();
         }
     }
 
     private async Task updateTask(TaskerItem item)
     {
-        //save our item to local storage
-        await SaveListAsync();
+        try
+        {
+            string route = $"api/TaskerItem/{item.Id}";
+
+            HttpResponseMessage response = await Http.PutAsJsonAsync(route, item);
+            response.EnsureSuccessStatusCode();
+
+            await LoadListAsync();
+        }
+        catch
+        {
+            throw;
+        }
     }
 }
